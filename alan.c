@@ -533,7 +533,7 @@ main(int argc, char *argv[])
     machine_print_dbg(machine);//exit(1);
 
     if (machine_run(machine)) {
-        fprintf(stderr, "Unable to process this definition of Turing machine.\n")
+        fprintf(stderr, "Unable to process this definition of Turing machine.\n");
         machine_fini(machine);
         return 1;
     }
