@@ -37,6 +37,31 @@ typedef struct machine
 
 
 /*
+ * Final clean up of main structure.
+ */
+static void
+machine_fini(machine_t *machine)
+{
+    int i;
+    
+    if (machine == NULL)
+        return;
+        
+    if (machine->tape)
+        free(machine->tape);
+    
+    if (machine->action_table) {
+        for (i = 0; i < machine->action_table_size; i++)
+            free(machine->action_table[i]);
+        
+        free(machine->action_table);
+    }
+    
+    free(machine);
+}
+
+
+/*
  * Print whole tape.
  */
 static void
@@ -114,8 +139,8 @@ machine_last_line_print(machine_t *machine)
 {
     int i;
     
-    printf("---------------------------------------------------------------\n");
-    for (i = 0; i <= machine->tape_size; i++)
+    printf("+-------------------------------------------------------------+\n");
+    for (i = 0; i < machine->tape_size; i++)
         printf("%c", machine->tape[i]);
     printf("\n");
 }
@@ -154,6 +179,9 @@ machine_tape_resize(machine_t *machine, uint32_t offset, size_t size)
 }
 
 
+/*
+ * Move head to a new position - resize tape buffer if neccessary
+ */
 static int 
 machine_head_move(machine_t *machine, int direction)
 {
@@ -180,9 +208,11 @@ machine_head_move(machine_t *machine, int direction)
 }
 
 
-
+/*
+ * Find new state base on current state and current symbol on the tape. 
+ */
 static int
-machine_find_rule(machine_t *machine)
+machine_get_next_state(machine_t *machine)
 {
     int state_idx = -1;
     machine_state_t *state;
@@ -206,6 +236,9 @@ machine_find_rule(machine_t *machine)
 }
 
 
+/*
+ * Main loop processing the tape.
+ */
 static int
 machine_run(machine_t *machine)
 {
@@ -222,7 +255,7 @@ machine_run(machine_t *machine)
     while (1) {
         machine_print(machine);
         
-        idx = machine_find_rule(machine);
+        idx = machine_get_next_state(machine);
         if (idx == -1)
             return 1;
         cs = machine->action_table[idx];
@@ -320,11 +353,13 @@ readinput_action_table(FILE *fd, machine_t *machine)
     machine->action_table_size = 0;
     
     while (!feof(fd)) {
+        /* resize action table if there is no enough space for new state */
         if (line == machine->action_table_size) {
             machine->action_table_size += MACHINE_AT_REALLOC;
             machine->action_table = (machine_state_t **) realloc(machine->action_table, 
                 sizeof(machine_state_t *) * machine->action_table_size);
             assert(machine->action_table);
+            memset(&(machine->action_table[line]), 0, MACHINE_AT_REALLOC);
         }
         
         state = (machine_state_t *) malloc(sizeof(machine_state_t));
@@ -458,6 +493,7 @@ main(int argc, char *argv[])
 
     machine_run(machine);
     machine_last_line_print(machine);
+    machine_fini(machine);
 
     return 0;
 }
