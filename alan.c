@@ -6,7 +6,9 @@
 #include <string.h>
 
 /* Default value for tape resizing */
-#define     MACHINE_TAPE_RESIZE             10
+#define     MACHINE_TAPE_RESIZE             1
+
+/* Default value for action table realloc */
 #define     MACHINE_AT_REALLOC              20
 
 
@@ -73,10 +75,10 @@ machine_action_table_print(machine_t *machine)
 
 
 /*
- * Machine dump. 
+ * Machine dump - verbose version for debugging purpose. 
  */
 static void
-machine_print(machine_t *machine)
+machine_print_dbg(machine_t *machine)
 {
     machine_tape_print(machine);
     printf("size: %d\n", machine->tape_size);
@@ -84,6 +86,38 @@ machine_print(machine_t *machine)
     printf("state: %d\n", machine->current_state);
     printf("stop: %d\n", machine->stop_state);
     machine_action_table_print(machine);
+}
+
+
+/*
+ * Print tape, head position and state.
+ */
+static void
+machine_print(machine_t *machine)
+{
+    int i;
+    
+    printf("%2d|", machine->current_state);
+    machine_tape_print(machine);
+    printf("  |");
+    for (i = 0; i < machine->tape_idx; i++)
+        printf(" ");
+    printf("^\n");
+}
+
+
+/*
+ * Print content of the tape as required in assignment.
+ */
+static void
+machine_last_line_print(machine_t *machine)
+{
+    int i;
+    
+    printf("---------------------------------------------------------------\n");
+    for (i = 0; i <= machine->tape_size; i++)
+        printf("%c", machine->tape[i]);
+    printf("\n");
 }
 
 
@@ -115,6 +149,103 @@ machine_tape_resize(machine_t *machine, uint32_t offset, size_t size)
     
     machine->tape_size = size;
     machine->tape = new_tape;
+    
+    return 0;
+}
+
+
+static int 
+machine_head_move(machine_t *machine, int direction)
+{
+    int offset;
+    
+    /* don't move or stay in range */
+    if (direction == 0 ||
+        ((machine->tape_idx + direction) >= 0 &&
+        (machine->tape_idx + direction) <= machine->tape_size)) {
+        machine->tape_idx += direction;
+        return 0;
+    }
+    
+    if (direction < 0) {
+        offset = MACHINE_TAPE_RESIZE;
+        machine->tape_idx = offset - 1;
+    }
+    else {
+        offset = 0;
+        machine->tape_idx++;
+    }
+    
+    return machine_tape_resize(machine, offset, machine->tape_size + MACHINE_TAPE_RESIZE);
+}
+
+
+
+static int
+machine_find_rule(machine_t *machine)
+{
+    int state_idx = -1;
+    machine_state_t *state;
+    int i;
+    
+    //FIXME
+    for (i = 0; i < machine->action_table_size; i++) {
+        // search only among curent state
+        if (machine->action_table[i]->state != machine->current_state)
+            continue;
+        
+        // symbol on the tape and symbol in state matched or state contains '*'
+        if (machine->action_table[i]->read == machine->tape[machine->tape_idx] 
+            || machine->action_table[i]->read == '*') {
+            state_idx = i;
+            break;
+        }
+    }
+    
+    return state_idx; //FIXME - data type
+}
+
+
+static int
+machine_run(machine_t *machine)
+{
+    int idx;
+    machine_state_t *cs;
+    
+    /* start state is halting state */
+    if (machine->current_state == machine->stop_state)
+        return 0;
+    
+    //find state
+    //symbol doesn't match
+    //final state
+    while (1) {
+        machine_print(machine);
+        
+        idx = machine_find_rule(machine);
+        if (idx == -1)
+            return 1;
+        cs = machine->action_table[idx];
+        
+        /* 
+         * Write new symbol
+         */
+        if (cs->write != '*')
+            machine->tape[machine->tape_idx] = cs->write;
+        
+        /*
+         * Move head
+         */
+        machine_head_move(machine, cs->direction);
+        
+        /*
+         * New state
+         */
+        machine->current_state = cs->new_state;
+        
+        if (machine->current_state == machine->stop_state)
+            break;
+    }
     
     return 0;
 }
@@ -213,6 +344,8 @@ readinput_action_table(FILE *fd, machine_t *machine)
     /* Keep table size and not size of alloc'd memory */
     machine->action_table_size = line;
     
+    //FIXME - sort the action_table (wild-card must be the last rule of group)
+    
     return 0;
 }
 
@@ -235,8 +368,14 @@ readinput_action_table(FILE *fd, machine_t *machine)
             return NULL;                            \
         }
 
+
 /*
  * Read an input file and initialize machine_t structure.
+ * Consists of:
+ *  - tape initialization 
+ *  - head offset
+ *  - start and stop state
+ *  - action table
  */
 static machine_t *
 readinput(const char *filename)
@@ -271,7 +410,7 @@ readinput(const char *filename)
 
     //printf("%zd %zd\n", machine->tape_size, len);
     //FIXME - no content!
-    /* Fill rest of the tape with a blank symbol */
+    /* Fill rest of the tape with a blank symbol - \n and \0 in not included in len */
     while (len <= machine->tape_size) {
         machine->tape[len-1] = '-';
         len++;
@@ -317,7 +456,8 @@ main(int argc, char *argv[])
         return 1;
     }
 
-    machine_print(machine);
+    machine_run(machine);
+    machine_last_line_print(machine);
 
     return 0;
 }
