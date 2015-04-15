@@ -254,27 +254,26 @@ machine_run(machine_t *machine)
     while (1) {
         machine_print(machine);
 
+        /* Find new states */
         idx = machine_get_next_state(machine);
         if (idx == -1)
             return 1;
         cs = machine->action_table[idx];
 
-        /*
-         * Write new symbol
-         */
+        /* Write new symbol */
         if (cs->write != '*')
             machine->tape[machine->tape_idx] = cs->write;
 
-        /*
-         * Move head
-         */
-        machine_head_move(machine, cs->direction);
+        /* Move head */
+        if (machine_head_move(machine, cs->direction)) {
+            fprintf(stderr, "Can not change possition of head.");
+            return 1;
+        }
 
-        /*
-         * New state
-         */
+        /* Set new state */
         machine->current_state = cs->new_state;
 
+        /* Halting state */
         if (machine->current_state == machine->stop_state)
             break;
     }
@@ -295,12 +294,14 @@ readinput_tape(FILE *fd, machine_t *machine)
     machine->tape = (char *) malloc(sizeof(char) * MACHINE_TAPE_RESIZE);
     assert(machine->tape);
 
-    //FIXME - check all return - new line included?????
     len = getline(&(machine->tape), &(machine->tape_size), fd);
     if (len == -1)
         return 1;
 
-    /* Fill rest of the tape with a blank symbol - \n and \0 in not included in len */
+    /*
+     * Fill rest of the tape with a blank symbol - last two characters
+     * '\n' and '\0' will be also replaced.
+     */
     while (len <= machine->tape_size) {
         machine->tape[len-1] = '-';
         len++;
