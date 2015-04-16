@@ -23,3 +23,14 @@ The tape is initialized with the starting contents (which do not include the new
 ```<State index> <Read> <Write> <Direction> <New state index>```
 
 `<State index>` and `<New state index>` are integer state numbers. `<Read>` is either a symbol to match against, or the special character '*' to match against any symbol, to determine which transition to select when in state `<State index>`. `<Write>` is either the symbol to write back to the tape or '*' to indicate that no symbol should be written. `<New state index>` is the state number to transition to. `<Direction>` is either 1, 0, or -1 to indicate that the head should be moved right, stay still, or moved left, respectively.Use of the wild-card character may mean that the processing order of rules is important. For the purpose of this exercise, you can assume that a rule containing a wild-card match will appear last in the list of rules for that state, and that a more precise match should always be processed first.
+
+## Example
+```
+-baba-
+1
+0
+1
+0 a b 1 0
+0 b a 1 0
+0 - - 0 1
+```
