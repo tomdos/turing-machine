@@ -1,3 +1,6 @@
+/* 
+ * Author: Tomas Dosoudil 
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -209,6 +212,9 @@ machine_head_move(machine_t *machine, int direction)
 
 /*
  * Find new state base on current state and current symbol on the tape.
+ *
+ * There might be several way how to optimize following code. However I assume
+ * "reasonable" size of action table and therefor I iterate through all states.
  */
 static int
 machine_get_next_state(machine_t *machine)
@@ -217,7 +223,6 @@ machine_get_next_state(machine_t *machine)
     machine_state_t *state;
     int i;
 
-    //FIXME
     for (i = 0; i < machine->action_table_size; i++) {
         // search only among curent states
         if (machine->action_table[i]->state != machine->current_state)
@@ -231,7 +236,7 @@ machine_get_next_state(machine_t *machine)
         }
     }
 
-    return state_idx; //FIXME - data type
+    return state_idx;
 }
 
 
@@ -244,15 +249,11 @@ machine_run(machine_t *machine)
     int idx;
     machine_state_t *cs;
 
-    /* start state is halting state */
-    if (machine->current_state == machine->stop_state)
-        return 0;
-
-    //find state
-    //symbol doesn't match
-    //final state
     while (1) {
         machine_print(machine);
+        
+        if (machine->current_state == machine->stop_state)
+            break;        
 
         /* Find new states */
         idx = machine_get_next_state(machine);
@@ -272,10 +273,6 @@ machine_run(machine_t *machine)
 
         /* Set new state */
         machine->current_state = cs->new_state;
-
-        /* Halting state */
-        if (machine->current_state == machine->stop_state)
-            break;
     }
 
     return 0;
@@ -405,6 +402,21 @@ readinput_action_table(FILE *fd, machine_t *machine)
     machine->action_table_size = 0;
 
     while (!feof(fd)) {
+        state = (machine_state_t *) malloc(sizeof(machine_state_t));
+        assert(state);
+
+        n = fscanf(fd, "%u %c %c %d %u\n", &state->state, &state->read,
+            &state->write, &state->direction, &state->new_state);
+
+        if (n != 5 || errno != 0) {
+            /* It may happend on some systems that EOF is reached after last line */
+            if (feof(fd)) {
+                free(state);
+                break;
+            }
+            return 1;
+        }
+        
         /* resize action table if there is no enough space for new state */
         if (line == machine->action_table_size) {
             machine->action_table_size += MACHINE_AT_REALLOC;
@@ -412,17 +424,7 @@ readinput_action_table(FILE *fd, machine_t *machine)
                 sizeof(machine_state_t *) * machine->action_table_size);
             assert(machine->action_table);
             memset(&(machine->action_table[line]), 0, MACHINE_AT_REALLOC);
-        }
-
-        state = (machine_state_t *) malloc(sizeof(machine_state_t));
-        assert(state);
-
-        n = fscanf(fd, "%u %c %c %d %u\n", &state->state, &state->read,
-            &state->write, &state->direction, &state->new_state);
-
-        //FIXME - feof() test
-        if (n != 5 || errno != 0)
-            return 1;
+        }        
 
         machine->action_table[line] = state;
         line++;
