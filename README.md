@@ -7,9 +7,9 @@ Simple tool implementing turing machine. The program has only one input and that
 We assume the set of symbols is the set of printable ASCII characters, excluding '*' and white-space characters. The blank symbol is '-'. The '*' character will be treated specially as a wild-card character – see below for details.
 
 *Input file format:*
-`<Starting contents of tape>\n`
-`<Starting offset of machine head>\n`
-`<Start state index (integer)>\n`
+`<Starting contents of tape>\n
+<Starting offset of machine head>\n
+<Start state index (integer)>\n`
 `<Halting state index (integer)>\n`
 `<Action table>\n`
 
