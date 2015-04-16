@@ -6,7 +6,8 @@ Simple tool implementing turing machine. The program has only one input and that
 ## Simple description 
 We assume the set of symbols is the set of printable ASCII characters, excluding '*' and white-space characters. The blank symbol is '-'. The '*' character will be treated specially as a wild-card character – see below for details.
 
-*Input file format:*
+*Input file format*
+
 ```
 <Starting contents of tape>\n
 <Starting offset of machine head>\n
