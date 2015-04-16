@@ -1,17 +1,17 @@
 # Alan - implementation of Turing machine
 
-Simple tool implementing turing machine. The program has only one input and that is file fith machine's definition. Purpose of tool is job interview assignment.
+Simple tool implementing turing machine. The program has only one input and that is file fith machine's definition. Purpose of 'Alan' is a job interview assignment.
 
 
 ## Simple description 
 We assume the set of symbols is the set of printable ASCII characters, excluding '*' and white-space characters. The blank symbol is '-'. The '*' character will be treated specially as a wild-card character – see below for details.
 
 *Input file format:*
-<Starting contents of tape>\n
-<Starting offset of machine head>\n
-<Start state index (integer)>\n
-<Halting state index (integer)>\n
-<Action table>\n
+`<Starting contents of tape>\n`
+`<Starting offset of machine head>\n`
+`<Start state index (integer)>\n`
+`<Halting state index (integer)>\n`
+`<Action table>\n`
 
 The tape is initialized with the starting contents (which do not include the newline), and the head of the Turing machine is positioned at an offset (given by <Starting offset of machine head>) from the position of the first symbol of the initialized section of the tape (so offset zero would be on the first symbol of the starting contents). If the initial tape contents are empty, then the offset is irrelevant (but must still be included as per the input file specification). Note that, during the operation of the machine, the head may move outside positions that were initialized with the starting contents of the tape. 
 
