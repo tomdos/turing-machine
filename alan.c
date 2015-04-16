@@ -224,11 +224,11 @@ machine_get_next_state(machine_t *machine)
     int i;
 
     for (i = 0; i < machine->action_table_size; i++) {
-        // search only among curent states
+        /* search only among curent states */
         if (machine->action_table[i]->state != machine->current_state)
             continue;
 
-        // symbol on the tape must match symbol in state or state contains '*'
+        /* symbol on the tape must match symbol in state or state contains '*' */
         if (machine->action_table[i]->read == machine->tape[machine->tape_idx]
             || machine->action_table[i]->read == '*') {
             state_idx = i;
@@ -409,11 +409,11 @@ readinput_action_table(FILE *fd, machine_t *machine)
             &state->write, &state->direction, &state->new_state);
 
         if (n != 5 || errno != 0) {
+            free(state);
             /* It may happend on some systems that EOF is reached after last line */
-            if (feof(fd)) {
-                free(state);
+            if (feof(fd))
                 break;
-            }
+
             return 1;
         }
         
@@ -533,7 +533,7 @@ main(int argc, char *argv[])
         return 1;
     }
 
-    machine_print_dbg(machine);//exit(1);
+    machine_print_dbg(machine);
 
     if (machine_run(machine)) {
         fprintf(stderr, "Unable to process this definition of Turing machine.\n");
