@@ -1,5 +1,5 @@
 CC=gcc
-FLAGS=-O0 -ggdb -pedantic
+FLAGS=-O0 -ggdb -pedantic -Wall
 
 all: alan
 

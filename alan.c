@@ -1,5 +1,5 @@
-/* 
- * Author: Tomas Dosoudil 
+/*
+ * Author: Tomas Dosoudil
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -86,7 +86,7 @@ static void
 machine_print_dbg(machine_t *machine)
 {
     machine_tape_print(machine);
-    printf("size: %d\n", machine->tape_size);
+    printf("size: %lu\n", (unsigned long) machine->tape_size);
     printf("idx: %d\n", machine->tape_idx);
     printf("state: %d\n", machine->current_state);
     printf("stop: %d\n", machine->stop_state);
@@ -220,7 +220,6 @@ static int
 machine_get_next_state(machine_t *machine)
 {
     int state_idx = -1;
-    machine_state_t *state;
     int i;
 
     for (i = 0; i < machine->action_table_size; i++) {
@@ -251,9 +250,9 @@ machine_run(machine_t *machine)
 
     while (1) {
         machine_print(machine);
-        
+
         if (machine->current_state == machine->stop_state)
-            break;        
+            break;
 
         /* Find new states */
         idx = machine_get_next_state(machine);
@@ -416,7 +415,7 @@ readinput_action_table(FILE *fd, machine_t *machine)
 
             return 1;
         }
-        
+
         /* resize action table if there is no enough space for new state */
         if (line == machine->action_table_size) {
             machine->action_table_size += MACHINE_AT_REALLOC;
@@ -424,7 +423,7 @@ readinput_action_table(FILE *fd, machine_t *machine)
                 sizeof(machine_state_t *) * machine->action_table_size);
             assert(machine->action_table);
             memset(&(machine->action_table[line]), 0, MACHINE_AT_REALLOC);
-        }        
+        }
 
         machine->action_table[line] = state;
         line++;
